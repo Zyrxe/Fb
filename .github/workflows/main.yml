@@ -1,0 +1,49 @@
+name: Send WhatsApp Message
+
+on:
+  workflow_dispatch: # Workflow dijalankan secara manual
+
+jobs:
+  send_message:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Langkah 1: Checkout repository untuk mengakses file data.json
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Langkah 2: Membaca data dari file data.json
+      - name: Load Data from JSON File
+        id: load_data
+        run: |
+          echo "Reading data from data.json"
+          PHONE_NUMBER_ID=$(jq -r '.phone_number_id' data.json)
+          TO=$(jq -r '.to' data.json)
+          TEMPLATE_NAME=$(jq -r '.template.name' data.json)
+          LANGUAGE_CODE=$(jq -r '.template.language.code' data.json)
+
+          echo "::set-output name=phone_number_id::$PHONE_NUMBER_ID"
+          echo "::set-output name=to::$TO"
+          echo "::set-output name=template_name::$TEMPLATE_NAME"
+          echo "::set-output name=language_code::$LANGUAGE_CODE"
+
+        # Pastikan jq terpasang di GitHub Actions
+        shell: bash
+
+      # Langkah 3: Kirim pesan WhatsApp
+      - name: Send WhatsApp Message
+        run: |
+          curl -i -X POST https://graph.facebook.com/v21.0/${{ steps.load_data.outputs.phone_number_id }}/messages \
+          -H "Authorization: Bearer ${{ secrets.WHATSAPP_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"messaging_product\": \"whatsapp\",
+            \"to\": \"${{ steps.load_data.outputs.to }}\",
+            \"type\": \"template\",
+            \"template\": {
+              \"name\": \"${{ steps.load_data.outputs.template_name }}\",
+              \"language\": {
+                \"code\": \"${{ steps.load_data.outputs.language_code }}\"
+              }
+            }
+          }"
