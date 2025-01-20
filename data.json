@@ -1,0 +1,10 @@
+{
+  "phone_number_id": "556307304229271",
+  "to": "6282258003821",
+  "template": {
+    "name": "hello_world",
+    "language": {
+      "code": "en_US"
+    }
+  }
+}
